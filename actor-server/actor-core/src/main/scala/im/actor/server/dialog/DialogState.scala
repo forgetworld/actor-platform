@@ -2,10 +2,11 @@ package im.actor.server.dialog
 
 import java.time.Instant
 
-import akka.event.{ Logging, LoggingAdapter }
+import akka.event.{Logging, LoggingAdapter}
 import akka.persistence.SnapshotMetadata
-import im.actor.server.cqrs.{ Event, ProcessorState, TaggedEvent }
+import im.actor.server.cqrs.{Event, ProcessorState, TaggedEvent}
 import im.actor.server.model.Peer
+import org.slf4j.LoggerFactory
 
 import scala.collection.SortedSet
 
@@ -51,8 +52,10 @@ private[dialog] final case class DialogState(
   counter:           Int,
   unreadMessages:    SortedSet[UnreadMessage],
   unreadMessagesMap: Map[Long, Long]
-)(implicit log: LoggingAdapter) extends ProcessorState[DialogState] {
+) extends ProcessorState[DialogState] {
   import DialogEvents._
+
+  val log = LoggerFactory.getLogger(s"DialogRoot/$userId")
 
   override def updated(e: Event): DialogState = e match {
     case NewMessage(randomId, date, senderUserId, messageHeader) ⇒
