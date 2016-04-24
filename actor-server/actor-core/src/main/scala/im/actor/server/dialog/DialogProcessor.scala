@@ -1,24 +1,25 @@
 package im.actor.server.dialog
 
 import akka.actor._
+import akka.event.Logging
 import akka.http.scaladsl.util.FastFuture
 import akka.util.Timeout
 import com.github.benmanes.caffeine.cache.Cache
 import im.actor.api.rpc.misc.ApiExtension
-import im.actor.concurrent.{ ActorFutures, AlertingActor, StashingActor }
+import im.actor.concurrent.{ActorFutures, AlertingActor, StashingActor}
 import im.actor.serialization.ActorSerializer
 import im.actor.server.cqrs._
 import im.actor.server.db.DbExtension
 import im.actor.server.group.GroupExtension
 import im.actor.server.model.Peer
-import im.actor.server.sequence.{ SeqStateDate, SeqUpdatesExtension }
+import im.actor.server.sequence.{SeqStateDate, SeqUpdatesExtension}
 import im.actor.server.social.SocialExtension
 import im.actor.server.user.UserExtension
 import im.actor.util.cache.CacheHelpers._
 import slick.driver.PostgresDriver.api.Database
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 object DialogProcessor {
 
@@ -73,7 +74,7 @@ private[dialog] final class DialogProcessor(val userId: Int, val peer: Peer, ext
 
   override def persistenceId: String = DialogProcessor.persistenceId(userId, peer)
 
-  override protected def getInitialState: DialogState = DialogState.initial(userId)(log)
+  override protected def getInitialState: DialogState = DialogState.initial(userId)(Logging(this))
 
   override protected def saveSnapshotIfNeeded(): Unit = {
     super.saveSnapshotIfNeeded()
