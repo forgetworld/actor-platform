@@ -346,8 +346,10 @@ message DialogEvents {
         int32 reader_user_id = 8;
     }
 
-    message CounterReset {
+    message SetCounter {
         option (scalapb.message).extends = "im.actor.server.dialog.DialogEvent";
+
+        int32 count = 1;
     }
 
     message Initialized {

@@ -93,8 +93,8 @@ private[dialog] final case class DialogState(
     case MessagesReceived(date, receiverUserId) if receiverUserId != userId ⇒
       if (date.isAfter(lastReceiveDate)) this.copy(lastReceiveDate = date)
       else this
-    case CounterReset() ⇒
-      this.copy(counter = 0, unreadMessages = SortedSet.empty(UnreadMessage.OrderingAsc), unreadMessagesMap = Map.empty)
+    case SetCounter(counter) ⇒
+      this.copy(counter = counter)
     case Initialized() ⇒ this
   }
 
