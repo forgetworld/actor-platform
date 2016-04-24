@@ -90,7 +90,7 @@ private[dialog] final case class DialogState(
       else this
     case MessagesReceived(date, receiverUserId) if receiverUserId == userId ⇒
       this.copy(lastOwnerReceiveDate = date)
-    case MessagesReceived(date, receiverUserId) if receiverUserId != receiverUserId ⇒
+    case MessagesReceived(date, receiverUserId) if receiverUserId != userId ⇒
       if (date.isAfter(lastReceiveDate)) this.copy(lastReceiveDate = date)
       else this
     case CounterReset() ⇒
