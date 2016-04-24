@@ -50,7 +50,7 @@ trait IncrementalSnapshots[S <: ProcessorState[S]] extends ProcessorStateControl
 }
 
 trait ProcessorStateControl[S <: ProcessorState[S]] {
-  private[this] var _state: S = getInitialState
+  private[this] lazy var _state: S = getInitialState
 
   protected def getInitialState: S
 
