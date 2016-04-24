@@ -23,7 +23,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 object DialogProcessor {
 
-  def register(): Unit = {
+  private[dialog] def register(): Unit = {
     ActorSerializer.register(
       40010 → classOf[DialogEvents.MessagesRead],
       40011 → classOf[DialogEvents.MessagesReceived],
@@ -33,6 +33,8 @@ object DialogProcessor {
       40014 → classOf[DialogStateSnapshot]
     )
   }
+
+  register()
 
   val MaxCacheSize = 100L
 
