@@ -33,6 +33,9 @@ sealed trait DialogExtension extends Extension
 final class DialogExtensionImpl(system: ActorSystem) extends DialogExtension with PeersImplicits {
   import HistoryUtils._
 
+  DialogRoot.register()
+  DialogProcessor.register()
+
   val InternalDialogExtensions = "modules.messaging.extensions"
 
   private lazy val userExt = UserExtension(system)

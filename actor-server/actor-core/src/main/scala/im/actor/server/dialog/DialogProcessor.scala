@@ -34,8 +34,6 @@ object DialogProcessor {
     )
   }
 
-  register()
-
   val MaxCacheSize = 100L
 
   def props(userId: Int, peer: Peer, extensions: Seq[ApiExtension]): Props =

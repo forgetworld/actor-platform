@@ -34,8 +34,6 @@ object DialogRoot {
     )
   }
 
-  register()
-
   def props(userId: Int, extensions: Seq[ApiExtension]) = Props(classOf[DialogRoot], userId, extensions)
 }
 
