@@ -2,9 +2,9 @@ package im.actor.server.dialog
 
 import java.time.Instant
 
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.{ Logging, LoggingAdapter }
 import akka.persistence.SnapshotMetadata
-import im.actor.server.cqrs.{Event, ProcessorState, TaggedEvent}
+import im.actor.server.cqrs.{ Event, ProcessorState, TaggedEvent }
 import im.actor.server.model.Peer
 import org.slf4j.LoggerFactory
 
@@ -33,7 +33,7 @@ private object UnreadMessage {
 private case class UnreadMessage(date: Instant, randomId: Long)
 
 private[dialog] object DialogState {
-  def initial(userId: Int)(implicit log: LoggingAdapter) = DialogState(
+  def initial(userId: Int) = DialogState(
     userId = userId,
     lastMessageDate = Instant.ofEpochMilli(0),
     lastReceiveDate = Instant.ofEpochMilli(0),
