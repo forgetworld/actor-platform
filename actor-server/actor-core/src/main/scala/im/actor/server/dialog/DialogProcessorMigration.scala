@@ -26,10 +26,12 @@ trait DialogProcessorMigration extends Processor[DialogState] {
 
   override def afterCommit(e: Event) = {
     super.afterCommit(e)
+    log.debug(s"afterCommit ${e.getClass.getName}")
     e match {
       case Initialized() ⇒ needMigrate = false
       case _             ⇒
     }
+    log.debug(s"needMigrate=${needMigrate}")
   }
 
   override protected def afterSnapshotApply(metadata: SnapshotMetadata, snapshot: Any): Unit = {
