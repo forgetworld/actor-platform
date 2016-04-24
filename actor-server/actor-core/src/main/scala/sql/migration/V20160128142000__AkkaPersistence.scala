@@ -5,20 +5,20 @@ import java.time.Instant
 import java.util.Base64
 
 import akka.actor.ActorSystem
-import akka.persistence.jdbc.serialization.{SerializationFacade, Serialized}
+import akka.persistence.jdbc.serialization.{ SerializationFacade, Serialized }
 import akka.persistence.journal.Tagged
-import akka.persistence.{AtomicWrite, PersistentRepr}
-import akka.serialization.{Serialization, SerializationExtension}
+import akka.persistence.{ AtomicWrite, PersistentRepr }
+import akka.serialization.{ Serialization, SerializationExtension }
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import im.actor.serialization.ActorSerializer
 import im.actor.server.CommonSerialization
 import im.actor.server.event.TSEvent
-import im.actor.server.group.{GroupEvent, GroupProcessor}
-import im.actor.server.user.{UserEvent, UserProcessor}
+import im.actor.server.group.{ GroupEvent, GroupProcessor }
+import im.actor.server.user.{ UserEvent, UserProcessor }
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration
 import org.joda.time.DateTime
-import shardakka.keyvalue.{RootEvents, ValueCommands, ValueEvents, ValueQueries}
+import shardakka.keyvalue.{ RootEvents, ValueCommands, ValueEvents, ValueQueries }
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration

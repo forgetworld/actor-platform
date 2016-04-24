@@ -28,6 +28,7 @@ object DialogProcessor {
       40011 → classOf[DialogEvents.MessagesReceived],
       40012 → classOf[DialogEvents.NewMessage],
       40013 → classOf[DialogEvents.CounterReset],
+      40015 -> classOf[DialogEvents.Initialized],
       40014 → classOf[DialogStateSnapshot]
     )
   }
