@@ -36,7 +36,9 @@ private[dialog] object DialogState {
   def initial(userId: Int) = DialogState(
     userId = userId,
     lastMessageDate = Instant.ofEpochMilli(0),
+    lastOwnerReceiveDate = Instant.ofEpochMilli(0),
     lastReceiveDate = Instant.ofEpochMilli(0),
+    lastOwnerReadDate = Instant.ofEpochMilli(0),
     lastReadDate = Instant.ofEpochMilli(0),
     counter = 0,
     unreadMessages = SortedSet.empty(UnreadMessage.OrderingAsc),
@@ -45,13 +47,15 @@ private[dialog] object DialogState {
 }
 
 private[dialog] final case class DialogState(
-  userId:            Int,
-  lastMessageDate:   Instant, //we don't use it now anywhere. should we remove it?
-  lastReceiveDate:   Instant,
-  lastReadDate:      Instant,
-  counter:           Int,
-  unreadMessages:    SortedSet[UnreadMessage],
-  unreadMessagesMap: Map[Long, Long]
+  userId:               Int,
+  lastMessageDate:      Instant, //we don't use it now anywhere. should we remove it?
+  lastOwnerReceiveDate: Instant,
+  lastReceiveDate:      Instant,
+  lastOwnerReadDate:    Instant,
+  lastReadDate:         Instant,
+  counter:              Int,
+  unreadMessages:       SortedSet[UnreadMessage],
+  unreadMessagesMap:    Map[Long, Long]
 ) extends ProcessorState[DialogState] {
   import DialogEvents._
 
@@ -77,13 +81,16 @@ private[dialog] final case class DialogState(
       this.copy(
         counter = newUnreadMessages.size,
         unreadMessages = newUnreadMessages,
-        unreadMessagesMap = newUnreadMessagesMap
+        unreadMessagesMap = newUnreadMessagesMap,
+        lastOwnerReadDate = date
       )
     case MessagesRead(date, readerUserId) if readerUserId != userId ⇒
       if (date.isAfter(lastReadDate))
         this.copy(lastReadDate = date)
       else this
-    case MessagesReceived(date) ⇒
+    case MessagesReceived(date, receiverUserId) if receiverUserId == userId ⇒
+      this.copy(lastOwnerReceiveDate = date)
+    case MessagesReceived(date, receiverUserId) if receiverUserId != receiverUserId ⇒
       if (date.isAfter(lastReceiveDate)) this.copy(lastReceiveDate = date)
       else this
     case CounterReset() ⇒
@@ -96,7 +103,9 @@ private[dialog] final case class DialogState(
       copy(
         userId = s.userId,
         lastMessageDate = s.lastMessageDate,
+        lastOwnerReceiveDate = s.lastOwnerReceiveDate,
         lastReceiveDate = s.lastReceiveDate,
+        lastOwnerReadDate = s.lastOwnerReadDate,
         lastReadDate = s.lastReadDate,
         counter = s.counter,
         unreadMessages = SortedSet(
@@ -111,7 +120,9 @@ private[dialog] final case class DialogState(
   override lazy val snapshot = DialogStateSnapshot(
     userId = userId,
     lastMessageDate = lastMessageDate,
+    lastOwnerReceiveDate = lastOwnerReceiveDate,
     lastReceiveDate = lastReceiveDate,
+    lastOwnerReadDate = lastOwnerReadDate,
     lastReadDate = lastReadDate,
     counter = counter,
     unreadMessages = unreadMessagesMap
