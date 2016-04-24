@@ -2,7 +2,7 @@ package im.actor.server.dialog
 
 import java.time.Instant
 
-import akka.actor.{ ActorRef, PoisonPill, Status }
+import akka.actor.Status
 import akka.http.scaladsl.util.FastFuture
 import akka.pattern.pipe
 import com.google.protobuf.wrappers.Int64Value
@@ -129,10 +129,13 @@ trait DialogCommandHandlers extends PeersImplicits with UserACL {
 
   protected def messageRead(state: DialogState, mr: MessageRead): Unit = {
     val mustRead = mustMakeRead(state, mr)
+    log.debug(s"mustRead is ${mustRead}")
 
     if (mustRead) {
       persist(MessagesRead(Instant.ofEpochMilli(mr.date), mr.getOrigin.id)) { e ⇒
+        log.debug(s"persisted MessagesRead, origin=${mr.getOrigin.id}, date=${Instant.ofEpochMilli(mr.date)}, counter=${state.counter}, unreadMessages=${state.unreadMessages}")
         commit(e)
+        log.debug(s"after commit: counter=${state.counter}, unreadMessages=${state.unreadMessages}")
 
         (for {
           _ ← dialogExt.ackMessageRead(peer, mr)
