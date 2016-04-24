@@ -55,7 +55,7 @@ private[dialog] final case class DialogState(
 ) extends ProcessorState[DialogState] {
   import DialogEvents._
 
-  val log = LoggerFactory.getLogger(s"DialogRoot/$userId")
+  val log = LoggerFactory.getLogger(s"$userId/DialogRoot")
 
   override def updated(e: Event): DialogState = e match {
     case NewMessage(randomId, date, senderUserId, messageHeader) ⇒
