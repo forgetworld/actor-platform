@@ -2,6 +2,7 @@ package im.actor.server.dialog
 
 import java.time.Instant
 
+import akka.event.{ Logging, LoggingAdapter }
 import akka.persistence.SnapshotMetadata
 import im.actor.server.cqrs.{ Event, ProcessorState, TaggedEvent }
 import im.actor.server.model.Peer
@@ -31,7 +32,7 @@ private object UnreadMessage {
 private case class UnreadMessage(date: Instant, randomId: Long)
 
 private[dialog] object DialogState {
-  def initial(userId: Int) = DialogState(
+  def initial(userId: Int)(implicit log: LoggingAdapter) = DialogState(
     userId = userId,
     lastMessageDate = Instant.ofEpochMilli(0),
     lastReceiveDate = Instant.ofEpochMilli(0),
@@ -50,7 +51,7 @@ private[dialog] final case class DialogState(
   counter:           Int,
   unreadMessages:    SortedSet[UnreadMessage],
   unreadMessagesMap: Map[Long, Long]
-) extends ProcessorState[DialogState] {
+)(implicit log: LoggingAdapter) extends ProcessorState[DialogState] {
   import DialogEvents._
 
   override def updated(e: Event): DialogState = e match {
@@ -65,6 +66,8 @@ private[dialog] final case class DialogState(
       } else this.copy(lastMessageDate = date)
     case MessagesRead(date, readerUserId) if readerUserId == userId ⇒
       val readMessages = unreadMessages.takeWhile(um ⇒ um.date.isBefore(date) || um.date == date).map(_.randomId)
+      log.debug(s"readMessages ${readMessages}")
+      log.debug(s"readMessages date ${unreadMessages.headOption map (um ⇒ um.date.isBefore(date) || um.date == date)}")
       val newUnreadMessages = unreadMessages.drop(readMessages.size)
       val newUnreadMessagesMap = unreadMessagesMap -- readMessages
 
