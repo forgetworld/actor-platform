@@ -11,12 +11,14 @@ import im.actor.server.persist.sequence.UserSequenceRepo
 import im.actor.server.pubsub.PubSubExtension
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{ Failure, Success }
 
 object UserSequence {
   def topic(userId: Int): String = s"sequence.$userId"
 
+  private case object Init
   private final case class Initialized(seq: Int)
 
   private[sequence] def props =
@@ -54,15 +56,17 @@ private[sequence] final class UserSequence extends Actor with ActorLogging with 
 
   private lazy val vendorPush = context.actorOf(VendorPush.props(userId), "vendor-push")
 
-  init()
+  self ! Init
 
   def receive = {
+    case Init => init()
     case Initialized(initSeq) ⇒
       setSeq(initSeq)
       unstashAll()
       context become initialized
     case Status.Failure(e) ⇒
       log.error(e, "Failed to initialize UserSequence")
+      context.system.scheduler.scheduleOnce(10.seconds, self, Init)
       init()
     case msg ⇒ stash()
   }

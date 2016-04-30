@@ -37,6 +37,7 @@ private case object FailedToUnregister extends RuntimeException("Failed to unreg
 
 private[sequence] object VendorPush {
 
+  private case object Init
   private final case class Initialized(creds: Seq[(PushCredentials, PushCredentialsInfo)])
 
   def props(userId: Int) =
@@ -118,18 +119,19 @@ private[sequence] final class VendorPush(userId: Int) extends Actor with ActorLo
   private var mapping: Map[PushCredentials, PushCredentialsInfo] = Map.empty
   private var notificationSettings = AllNotificationSettings()
 
-  init()
+  self ! Init
 
   def receive = initializing
 
   def initializing: Receive = {
+    case Init => init()
     case Initialized(creds) ⇒
       unstashAll()
       context become initialized
       mapping = creds.toMap
     case Status.Failure(e) ⇒
       log.error(e, "Failed to init")
-      throw e
+      context.system.scheduler.scheduleOnce(10.seconds, self, Init)
     case msg ⇒ stash()
   }
 
