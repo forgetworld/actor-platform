@@ -4,6 +4,7 @@ import java.time.Instant
 
 import akka.actor._
 import akka.cluster.sharding.ShardRegion
+import akka.pattern.{ ask, pipe }
 import akka.persistence.RecoveryCompleted
 import akka.util.Timeout
 import im.actor.api.rpc.misc.ApiExtension
@@ -246,7 +247,7 @@ private[user] final class UserProcessor
     case query: GetLocalName                ⇒ contacts.ref forward query
     case StopOffice                         ⇒ context stop self
     case ReceiveTimeout                     ⇒ context.parent ! ShardRegion.Passivate(stopMessage = StopOffice)
-    case dc: DialogCommand                  ⇒ userPeer(state.internalExtensions) forward dc
+    case dc: DialogCommand                  ⇒ (userPeer(state.internalExtensions) ? dc) pipeTo sender()
   }
 
   override protected def handleQuery(state: UserState): Receive = {

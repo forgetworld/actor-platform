@@ -4,7 +4,7 @@ import java.time.Instant
 
 import akka.actor._
 import akka.cluster.sharding.ShardRegion
-import akka.pattern.pipe
+import akka.pattern.{ ask, pipe }
 import akka.persistence.RecoveryCompleted
 import akka.util.Timeout
 import im.actor.api.rpc.collections.ApiMapValue
@@ -14,7 +14,6 @@ import im.actor.server.cqrs.TaggedEvent
 import im.actor.server.db.DbExtension
 import im.actor.server.dialog.{ DirectDialogCommand, DialogExtension }
 import im.actor.server.file.{ FileStorageExtension, FileStorageAdapter, Avatar }
-import im.actor.server.model.Group
 import im.actor.server.office.{ PeerProcessor, ProcessorState, StopOffice }
 import im.actor.server.sequence.SeqUpdatesExtension
 import im.actor.server.user.UserExtension
@@ -244,9 +243,10 @@ private[group] final class GroupProcessor
       makeUserAdmin(state, clientUserId, candidateId)
     case RevokeIntegrationToken(_, userId) ⇒
       revokeIntegrationToken(state, userId)
-    case StopOffice              ⇒ context stop self
-    case ReceiveTimeout          ⇒ context.parent ! ShardRegion.Passivate(stopMessage = StopOffice)
-    case dc: DirectDialogCommand ⇒ groupPeer forward dc
+    case StopOffice     ⇒ context stop self
+    case ReceiveTimeout ⇒ context.parent ! ShardRegion.Passivate(stopMessage = StopOffice)
+    case dc: DirectDialogCommand ⇒
+      (groupPeer ? dc) pipeTo sender()
   }
 
   private[this] var groupStateMaybe: Option[GroupState] = None
