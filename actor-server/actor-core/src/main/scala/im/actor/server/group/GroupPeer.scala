@@ -1,8 +1,9 @@
 package im.actor.server.group
 
-import akka.actor.{ ActorSystem, ActorLogging, Actor, Props }
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import im.actor.concurrent.AlertingActor
 import im.actor.server.cqrs.ProcessorState
-import im.actor.server.dialog.{ DialogExtension, DialogCommands }
+import im.actor.server.dialog.{DialogCommands, DialogExtension}
 
 import scala.concurrent.ExecutionContext
 
@@ -38,6 +39,7 @@ private[group] object GroupPeer {
 private[group] final class GroupPeer(val groupId: Int)
   extends Actor
   with ActorLogging
+  with AlertingActor
   with GroupPeerCommandHandlers {
 
   import DialogCommands._
