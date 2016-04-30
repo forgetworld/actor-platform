@@ -1,14 +1,16 @@
 package im.actor.server.user
 
-import java.time.{ Instant, Period }
+import java.time.{Instant, Period}
 
-import akka.actor.{ ActorRef, Props }
-import akka.pattern.{ ask, pipe }
+import akka.actor.{ActorRef, Props}
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
 import im.actor.api.rpc.PeersImplicits
 import im.actor.api.rpc.misc.ApiExtension
-import im.actor.concurrent.{ AlertingActor, FutureExt }
+import im.actor.concurrent.{AlertingActor, FutureExt}
+import im.actor.config.ActorConfig
 import im.actor.server.dialog._
-import im.actor.server.model.{ Dialog, Peer, PeerType }
+import im.actor.server.model.{Dialog, Peer, PeerType}
 
 import scala.concurrent.duration._
 
@@ -23,6 +25,8 @@ private[user] object UserPeer {
 private[user] final class UserPeer(userId: Int, extensions: Seq[ApiExtension]) extends AlertingActor with PeersImplicits {
   import UserPeer._
   import context.dispatcher
+
+  private implicit val timeout = Timeout(ActorConfig.defaultTimeout)
 
   private val selfPeer = Peer.privat(userId)
 
