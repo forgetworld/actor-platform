@@ -24,9 +24,9 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
         }
 
         for {
-          _ ← Future.traverse(receiverIds) { userId ⇒
+          _ ← Future.sequence(receiverIds map { userId ⇒
             dialogExt.ackSendMessage(Peer.privat(userId), sm)
-          }
+          })
         } yield {
           self ! LastSenderIdChanged(senderUserId)
           SendMessageAck()
@@ -41,9 +41,9 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
 
   protected def updateCountersChanged(uc: UpdateCounters) = {
     (withMemberIds(groupId) { (memberIds, _, _) ⇒
-      Future.traverse(memberIds - uc.origin.id) { userId ⇒
+      Future.sequence((memberIds - uc.origin.id) map { userId ⇒
         dialogExt.ackUpdateCounters(Peer.privat(userId), uc)
-      } map (_ ⇒ UpdateCountersAck())
+      }) map (_ ⇒ UpdateCountersAck())
     } recover {
       case e ⇒
         log.error(e, "Failed to send update counters changed")
@@ -56,9 +56,9 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
     val canReceive = canMakeReceive(state, mr)
     ((if (canReceive) {
       withMemberIds(groupId) { (memberIds, _, _) ⇒
-        Future.traverse(memberIds - receiverUserId) { memberId ⇒
+        Future.sequence((memberIds - receiverUserId) map { memberId ⇒
           dialogExt.ackMessageReceived(Peer.privat(memberId), mr)
-        }
+        })
       } map (_ ⇒ MessageReceivedAck())
     } else Future.successful(MessageReceivedAck())) recover {
       case e ⇒
@@ -84,9 +84,9 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
     (if (canRead) {
       withMembers { (memberIds, _, _) ⇒
         if (memberIds contains readerUserId) {
-          Future.traverse(memberIds - readerUserId) { memberId ⇒
+          Future.sequence((memberIds - readerUserId) map { memberId ⇒
             dialogExt.ackMessageRead(Peer.privat(memberId), mr)
-          } map (_ ⇒ ())
+          }) map (_ ⇒ ())
         } else Future.successful(())
       }
     } else Future.successful(())) map { _ ⇒ MessageReadAck() } pipeTo sender() recover {
@@ -105,17 +105,17 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
 
   protected def setReaction(state: GroupPeerState, sr: SetReaction): Unit = {
     withMemberIds(groupId) { (memberIds, _, _) ⇒
-      Future.traverse(memberIds - sr.origin.id) { memberId ⇒
+      Future.sequence((memberIds - sr.origin.id) map { memberId ⇒
         dialogExt.ackSetReaction(Peer.privat(memberId), sr)
-      }
+      })
     } map (_ ⇒ SetReactionAck()) pipeTo sender()
   }
 
   protected def removeReaction(state: GroupPeerState, sr: RemoveReaction): Unit = {
     withMemberIds(groupId) { (memberIds, _, _) ⇒
-      Future.traverse(memberIds - sr.origin.id) { memberId ⇒
+      Future.sequence((memberIds - sr.origin.id) map { memberId ⇒
         dialogExt.ackRemoveReaction(Peer.privat(memberId), sr)
-      }
+      })
     } map (_ ⇒ RemoveReactionAck()) pipeTo sender()
   }
 
