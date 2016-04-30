@@ -4,7 +4,7 @@ import akka.actor._
 import akka.pattern.pipe
 import im.actor.server.db.DbExtension
 import im.actor.server.model.push.{ ActorPushCredentials, ApplePushCredentials, GooglePushCredentials, PushCredentials }
-import im.actor.server.model.{ DeviceType, Peer, PeerType }
+import im.actor.server.model.{ DeviceType, Peer }
 import im.actor.server.persist.AuthSessionRepo
 import im.actor.server.persist.configs.ParameterRepo
 import im.actor.server.persist.push.{ ActorPushCredentialsRepo, ApplePushCredentialsRepo, GooglePushCredentialsRepo }
@@ -14,7 +14,7 @@ import im.actor.server.userconfig.SettingsKeys
 import slick.dbio.DBIO
 
 import scala.concurrent.Future
-import scala.util.control.NoStackTrace
+import scala.concurrent.duration._
 
 private[sequence] trait VendorPushCommand
 
