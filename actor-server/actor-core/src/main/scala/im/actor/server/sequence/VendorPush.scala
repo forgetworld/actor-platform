@@ -124,7 +124,7 @@ private[sequence] final class VendorPush(userId: Int) extends Actor with ActorLo
   def receive = initializing
 
   def initializing: Receive = {
-    case Init => init()
+    case Init ⇒ init()
     case Initialized(creds) ⇒
       unstashAll()
       context become initialized

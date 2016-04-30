@@ -59,7 +59,7 @@ private[sequence] final class UserSequence extends Actor with ActorLogging with 
   self ! Init
 
   def receive = {
-    case Init => init()
+    case Init ⇒ init()
     case Initialized(initSeq) ⇒
       setSeq(initSeq)
       unstashAll()
