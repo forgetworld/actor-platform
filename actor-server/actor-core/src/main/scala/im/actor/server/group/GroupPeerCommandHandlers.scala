@@ -3,7 +3,6 @@ package im.actor.server.group
 import akka.actor.Status
 import akka.pattern.pipe
 import im.actor.api.rpc.PeersImplicits
-import im.actor.concurrent.FutureExt
 import im.actor.server.dialog.DialogCommands._
 import im.actor.server.group.GroupErrors.NotAMember
 import im.actor.server.model.Peer
@@ -25,9 +24,9 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
         }
 
         for {
-          _ ← FutureExt.ftraverse(receiverIds.toSeq) { userId ⇒
+          _ ← Future.sequence(receiverIds map { userId ⇒
             dialogExt.ackSendMessage(Peer.privat(userId), sm)
-          }
+          })
         } yield {
           self ! LastSenderIdChanged(senderUserId)
           SendMessageAck()
@@ -42,7 +41,7 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
 
   protected def updateCountersChanged(uc: UpdateCounters) = {
     (withMemberIds(groupId) { (memberIds, _, _) ⇒
-      (FutureExt.ftraverse((memberIds - uc.origin.id).toSeq) { userId ⇒
+      Future.sequence((memberIds - uc.origin.id) map { userId ⇒
         dialogExt.ackUpdateCounters(Peer.privat(userId), uc)
       }) map (_ ⇒ UpdateCountersAck())
     } recover {
@@ -57,9 +56,9 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
     val canReceive = canMakeReceive(state, mr)
     ((if (canReceive) {
       withMemberIds(groupId) { (memberIds, _, _) ⇒
-        FutureExt.ftraverse((memberIds - receiverUserId).toSeq) { memberId ⇒
+        Future.sequence((memberIds - receiverUserId) map { memberId ⇒
           dialogExt.ackMessageReceived(Peer.privat(memberId), mr)
-        }
+        })
       } map (_ ⇒ MessageReceivedAck())
     } else Future.successful(MessageReceivedAck())) recover {
       case e ⇒
@@ -85,7 +84,7 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
     (if (canRead) {
       withMembers { (memberIds, _, _) ⇒
         if (memberIds contains readerUserId) {
-          (FutureExt.ftraverse((memberIds - readerUserId).toSeq) { memberId ⇒
+          Future.sequence((memberIds - readerUserId) map { memberId ⇒
             dialogExt.ackMessageRead(Peer.privat(memberId), mr)
           }) map (_ ⇒ ())
         } else Future.successful(())
@@ -106,17 +105,17 @@ trait GroupPeerCommandHandlers extends PeersImplicits {
 
   protected def setReaction(state: GroupPeerState, sr: SetReaction): Unit = {
     withMemberIds(groupId) { (memberIds, _, _) ⇒
-      FutureExt.ftraverse((memberIds - sr.origin.id).toSeq) { memberId ⇒
+      Future.sequence((memberIds - sr.origin.id) map { memberId ⇒
         dialogExt.ackSetReaction(Peer.privat(memberId), sr)
-      }
+      })
     } map (_ ⇒ SetReactionAck()) pipeTo sender()
   }
 
   protected def removeReaction(state: GroupPeerState, sr: RemoveReaction): Unit = {
     withMemberIds(groupId) { (memberIds, _, _) ⇒
-      FutureExt.ftraverse((memberIds - sr.origin.id).toSeq) { memberId ⇒
+      Future.sequence((memberIds - sr.origin.id) map { memberId ⇒
         dialogExt.ackRemoveReaction(Peer.privat(memberId), sr)
-      }
+      })
     } map (_ ⇒ RemoveReactionAck()) pipeTo sender()
   }
 
