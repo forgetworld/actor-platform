@@ -24,6 +24,7 @@ import MessageArtStore from '../../stores/MessageArtStore';
 
 import ComposeTextArea from './compose/ComposeTextArea.react';
 import ComposeMarkdownHint from './compose/ComposeMarkdownHint.react';
+import BotCommandsHint from './compose/BotCommandsHint.react';
 import AvatarItem from '../common/AvatarItem.react';
 import MentionDropdown from '../common/MentionDropdown.react';
 import MessageArt from '../messageArt/MessageArt.react';
@@ -42,22 +43,12 @@ class ComposeSection extends Component {
   static calculateState() {
     return {
       peer: DialogStore.getCurrentPeer(),
-      text: ComposeStore.getText(),
+      compose: ComposeStore.getState(),
       profile: ActorClient.getUser(ActorClient.getUid()),
       sendByEnter: PreferencesStore.isSendByEnterEnabled(),
-      mentions: ComposeStore.getMentions(),
-      isAutoFocusEnabled: ComposeStore.isAutoFocusEnabled(),
       isMessageArtOpen: MessageArtStore.getState().isOpen,
       stickers: MessageArtStore.getState().stickers
     };
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.peer !== this.state.peer) {
-      if (this.refs.area) {
-        this.refs.area.autoFocus();
-      }
-    }
   }
 
   constructor(props) {
@@ -69,12 +60,20 @@ class ComposeSection extends Component {
     this.onKeyDown = this.onKeyDown.bind(this);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.peer !== this.state.peer) {
+      if (this.refs.area) {
+        this.refs.area.autoFocus();
+      }
+    }
+  }
+
   onTyping(text, caretPosition) {
     ComposeActionCreators.onTyping(this.state.peer, text, caretPosition);
   }
 
   onSubmit() {
-    const { peer, text } = this.state;
+    const { peer, compose: { text } } = this.state;
 
     if (text.trim().length) {
       MessageActionCreators.sendTextMessage(peer, text);
@@ -100,13 +99,20 @@ class ComposeSection extends Component {
     }
   }
 
+  onCommand(command) {
+    const { peer } = this.state;
+    MessageActionCreators.sendTextMessage(peer, `/${command}`);
+    ComposeActionCreators.cleanText();
+  }
+
   resetAttachmentForm = () => {
     const form = findDOMNode(this.refs.attachmentForm);
     form.reset();
   };
 
+  // TODO: move this to textarea component
   onMentionSelect = (mention) => {
-    const { peer, text } = this.state;
+    const { peer, compose: { text } } = this.state;
 
     ComposeActionCreators.insertMention(peer, text, this.getCaretPosition(), mention);
     this.setFocus();
@@ -116,10 +122,20 @@ class ComposeSection extends Component {
     ComposeActionCreators.closeMention();
   };
 
+  // TODO: move this to textarea component
   handleEmojiSelect = (emoji) => {
-    EmojiActionCreators.insertEmoji(this.state.text, this.getCaretPosition(), emoji);
+    const { compose: { text } } = this.state;
+    EmojiActionCreators.insertEmoji(text, this.getCaretPosition(), emoji);
     this.setFocus();
   };
+
+  onCommandSelect(command) {
+    console.debug('command select', command);
+  }
+
+  onCommandClose() {
+    console.debug('command close');
+  }
 
   handleStickerSelect = (sticker) => {
     const { peer } = this.state;
@@ -162,18 +178,54 @@ class ComposeSection extends Component {
     MessageActionCreators.sendVoiceMessage(peer, duration, record);
   };
 
+  // TODO: remove this method
+  getCaretPosition() {
+    if (this.refs.area) {
+      return this.refs.area.getCaretPosition();
+    }
+
+    return 0;
+  }
+
+  renderCommands() {
+    const { compose } = this.state;
+    if (!compose.commands) {
+      return null;
+    }
+
+    return (
+      <BotCommandsHint
+        commands={compose.commands}
+        onSelect={this.onCommandSelect}
+        onClose={this.onCommandClose}
+      />
+    );
+  }
+
+  renderMentions() {
+    const { compose } = this.state;
+    if (!compose.mentions) {
+      return null;
+    }
+
+    return (
+      <MentionDropdown
+        mentions={compose.mentions}
+        onSelect={this.onMentionSelect}
+        onClose={this.onMentionClose}
+      />
+    );
+  }
+
   render() {
-    const { text, profile, mentions, stickers, isAutoFocusEnabled, isMessageArtOpen, sendByEnter } = this.state;
+    const { compose, profile, stickers, isMessageArtOpen, sendByEnter } = this.state;
     const { intl } = this.context;
 
     return (
       <section className="compose">
 
-        <MentionDropdown
-          mentions={mentions}
-          onSelect={this.onMentionSelect}
-          onClose={this.onMentionClose}
-        />
+        {this.renderMentions()}
+        {this.renderCommands()}
 
         <MessageArt
           onSelect={this.handleEmojiSelect}
@@ -191,11 +243,11 @@ class ComposeSection extends Component {
           title={profile.name}
         />
 
-        <ComposeMarkdownHint isActive={text.length >= 3} />
+        <ComposeMarkdownHint isActive={compose.text.length >= 3} />
         <ComposeTextArea
           ref="area"
-          value={text}
-          autoFocus={isAutoFocusEnabled}
+          value={compose.text}
+          autoFocus={compose.autoFocus}
           sendByEnter={sendByEnter}
           onTyping={this.onTyping}
           onSubmit={this.onSubmit}
